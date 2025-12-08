@@ -1183,7 +1183,7 @@ pub fn Musubi(
             const path = Path.init(self.alloc);
 
             var minHeap = mH.init(self.alloc);
-            defer minHeap.deinit();
+            defer minHeap.deinit(self.alloc);
 
             for (self.outGoing.keys()) |vtx| {
                 if (knockout != null and !reflect and knockout.?.contains(vtx)) continue;
@@ -1902,7 +1902,7 @@ pub fn Musubi(
             var tree = HashMap4.init(self.alloc);
 
             var pq = mH2.init(self.alloc);
-            defer pq.deinit();
+            defer pq.deinit(self.alloc);
 
             var forest = Partition{};
 
