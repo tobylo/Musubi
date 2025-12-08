@@ -100,7 +100,7 @@ pub fn PieQ(comptime Key: type, comptime Value: type, comptime orientation: Orie
 
         /// Creates the Queue with the given Allocator.
         pub fn init() Self {
-            return .{ .data = .empty };
+            return .{ .data = .empty, .dashboard = .{} };
         }
         /// Releases all Queue's allocated memory.
         pub fn deinit(self: *Self, alloc: std.mem.Allocator) void {
