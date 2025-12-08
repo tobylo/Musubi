@@ -2,7 +2,7 @@
     .name = .Musubi,
     .version = "1.0.0",
     .fingerprint = 0x7b23a2be89c5f459,
-    .minimum_zig_version = "0.15.1",
+    .minimum_zig_version = "0.15.2",
     .paths = .{
         "build.zig",
         "build.zig.zon",
