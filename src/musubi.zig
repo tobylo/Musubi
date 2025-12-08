@@ -1182,7 +1182,7 @@ pub fn Musubi(
             var discovered = HashMap3.init(self.alloc);
             const path = Path.init(self.alloc);
 
-            var minHeap = mH.init(self.alloc);
+            var minHeap = mH.init();
             defer minHeap.deinit(self.alloc);
 
             for (self.outGoing.keys()) |vtx| {
@@ -1192,7 +1192,7 @@ pub fn Musubi(
                 try discovered.put(vtx, .{ .weight = inf, .edge = undefined });
             }
             try discovered.put(origin, .{ .weight = 0, .edge = undefined });
-            try minHeap.push(.{ .key = 0, .val = origin });
+            try minHeap.push(self.alloc, .{ .key = 0, .val = origin });
 
             switch (Tag(target)) {
                 .yes => {
