@@ -1764,8 +1764,8 @@ pub fn Musubi(
             var discovered = HashMap5.init(self.alloc);
             defer discovered.deinit();
 
-            var minHeap = mH.init(self.alloc);
-            defer minHeap.deinit();
+            var minHeap = mH.init();
+            defer minHeap.deinit(self.alloc);
 
             var all_vertices = self.outGoing.keys();
             try discovered.put(all_vertices[0], .{ .weight = 0, .edge = null });
@@ -1773,7 +1773,7 @@ pub fn Musubi(
             for (all_vertices[1..]) |vtx| {
                 try discovered.put(vtx, .{ .weight = inf, .edge = null });
             }
-            try minHeap.push(.{ .key = 0, .val = all_vertices[0] });
+            try minHeap.push(self.alloc, .{ .key = 0, .val = all_vertices[0] });
 
             while (!minHeap.isEmpty()) {
                 const fringe = (try minHeap.pop()).val;
@@ -1805,7 +1805,7 @@ pub fn Musubi(
                         if (edge.*.weight < wae2.*.weight) {
                             wae2.* = WeightAndEdge2{ .weight = edge.*.weight, .edge = edge.* };
 
-                            try minHeap.push(.{ .key = edge.*.weight, .val = v });
+                            try minHeap.push(self.alloc, .{ .key = edge.*.weight, .val = v });
                         }
                     }
                 }
