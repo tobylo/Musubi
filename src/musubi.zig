@@ -32,7 +32,7 @@ pub fn Musubi(
     comptime graphType: GraphType,
     comptime graphMode: GraphMode,
 ) type {
-    if (graphMode == .weighted and (@typeInfo(edgeWt) != .Int and @typeInfo(edgeWt) != .Float))
+    if (graphMode == .weighted and (@typeInfo(edgeWt) != .int and @typeInfo(edgeWt) != .float))
         @compileError("The graphMode is .weighted but the edge's weight is not .Int nor .Float, yet: " ++ @typeName(edgeWt));
     if (graphMode == .weighted and @typeInfo(edgeWt) == .void)
         @compileError("The graphMode is .weighted but edge's weight is " ++ @typeName(edgeWt));
