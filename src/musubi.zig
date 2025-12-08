@@ -1412,7 +1412,7 @@ pub fn Musubi(
                 .yes => {
                     switch (depth) {
                         0 => while (found.items.len > 0 and discovered.count() < vtx_count) {
-                            var origin_ = found.pop();
+                            var origin_ = found.pop() orelse return GraphError.MissingVertex;
 
                             if (eql(target.yes, origin_)) break;
 
