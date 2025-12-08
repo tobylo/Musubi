@@ -39,7 +39,6 @@ pub fn PieQ(comptime Key: type, comptime Value: type, comptime orientation: Orie
         const Dashboard = struct {
             root_locked: bool = false,
             orientation: Orientation = orientation,
-            allocator: std.mem.Allocator,
         };
 
         // non-public interface start...........
@@ -100,12 +99,12 @@ pub fn PieQ(comptime Key: type, comptime Value: type, comptime orientation: Orie
         dashboard: Dashboard,
 
         /// Creates the Queue with the given Allocator.
-        pub fn init(allocator: std.mem.Allocator) Self {
-            return .{ .data = Data.init(allocator), .dashboard = .{ .allocator = allocator } };
+        pub fn init() Self {
+            return .{ .data = .empty };
         }
         /// Releases all Queue's allocated memory.
-        pub fn deinit(self: *Self) void {
-            self.data.deinit();
+        pub fn deinit(self: *Self, alloc: std.mem.Allocator) void {
+            self.data.deinit(alloc);
         }
         /// Returns `true` if the Queue has at least 1 `Item`.
         pub fn isEmpty(self: *Self) bool {
@@ -131,8 +130,8 @@ pub fn PieQ(comptime Key: type, comptime Value: type, comptime orientation: Orie
             return self.dashboard.orientation;
         }
         /// Pushes the given `Item` into the Queue, keeping the Queue invariant.
-        pub fn push(self: *Self, item: Item) QueueError!void {
-            try self.data.append(item);
+        pub fn push(self: *Self, alloc: std.mem.Allocator, item: Item) QueueError!void {
+            try self.data.append(alloc, item);
             self.upheap(self.data.items.len - 1);
         }
 
