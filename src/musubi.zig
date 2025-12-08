@@ -33,7 +33,7 @@ pub fn Musubi(
     comptime graphMode: GraphMode,
 ) type {
     if (graphMode == .weighted and (@typeInfo(edgeWt) != .int and @typeInfo(edgeWt) != .float))
-        @compileError("The graphMode is .weighted but the edge's weight is not .Int nor .Float, yet: " ++ @typeName(edgeWt));
+        @compileError("The graphMode is .weighted but the edge's weight is not .int nor .float, yet: " ++ @typeName(edgeWt));
     if (graphMode == .weighted and @typeInfo(edgeWt) == .void)
         @compileError("The graphMode is .weighted but edge's weight is " ++ @typeName(edgeWt));
     if (graphMode == .unweighted and @typeInfo(edgeWt) != .void)
@@ -772,7 +772,7 @@ pub fn Musubi(
         // AUX TYPES and TOOLS //
 
         // Define infinity
-        pub const inf = if (@typeInfo(edgeWt) == .Float)
+        pub const inf = if (@typeInfo(edgeWt) == .float)
             @as(f64, @bitCast(std.math.inf(f64)))
         else
             @as(u64, @bitCast(std.math.inf(f64)));
