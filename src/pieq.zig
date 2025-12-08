@@ -161,7 +161,7 @@ pub fn PieQ(comptime Key: type, comptime Value: type, comptime orientation: Orie
                             return item;
                         }
                     },
-                    2 => return self.data.pop(),
+                    2 => return self.data.pop() orelse return QueueError.QueueIsEmpty,
 
                     1 => return self.data.items[0],
                 }
