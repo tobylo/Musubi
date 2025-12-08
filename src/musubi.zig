@@ -1427,7 +1427,7 @@ pub fn Musubi(
                         else => {
                             var depth_: u64 = depth;
                             while (found.items.len > 0 and depth_ > 0) : (depth_ -= 1) {
-                                var origin_ = found.pop();
+                                var origin_ = found.pop() orelse return GraphError.MissingVertex;
 
                                 if (eql(target.yes, origin_)) break;
 
@@ -1445,7 +1445,7 @@ pub fn Musubi(
                 .no => {
                     switch (depth) {
                         0 => while (found.items.len > 0 and discovered.count() < vtx_count) {
-                            var origin_ = found.pop();
+                            var origin_ = found.pop() orelse return GraphError.MissingVertex;
 
                             try self.dfsBLoop(&origin_, &discovered, knockout, reflect, &found, &leftover);
 
@@ -1458,7 +1458,7 @@ pub fn Musubi(
                         else => {
                             var depth_: u64 = depth;
                             while (found.items.len > 0 and depth_ > 0) : (depth_ -= 1) {
-                                var origin_ = found.pop();
+                                var origin_ = found.pop() orelse return GraphError.MissingVertex;
 
                                 try self.dfsBLoop(&origin_, &discovered, knockout, reflect, &found, &leftover);
 
