@@ -1163,7 +1163,7 @@ pub fn Musubi(
                     wae.*.weight = dist;
 
                     wae.*.edge = edge; // Collect the edge
-                    try minHeap.push(.{ .key = dist, .val = v });
+                    try minHeap.push(self.alloc, .{ .key = dist, .val = v });
                 }
             }
         }
@@ -1920,7 +1920,7 @@ pub fn Musubi(
                 try position.put(vtx, pos);
 
                 for (self.incidentEdges(vtx, .outgoing).?) |edge| {
-                    try pq.push(.{ .key = edge.weight, .val = edge });
+                    try pq.push(self.alloc, .{ .key = edge.weight, .val = edge });
                 }
             }
 
