@@ -40,11 +40,11 @@ pub fn Musubi(
         @compileError("The graphMode is .unweighted but edge's weight is " ++ @typeName(edgeWt));
     return struct {
         /// Map containing all outgoing vertices.
-        outGoing: HashMap1 = undefined,
+        outgoing: HashMap1 = undefined,
 
         /// Map containing all incoming vertices. If the graph is `.undirected`,
         /// inComing is a pointer to outGoing.
-        inComing: if (directed) HashMap1 else *HashMap1 = undefined,
+        incoming: if (directed) HashMap1 else *HashMap1 = undefined,
 
         /// Allocator used to initiate the graph.
         alloc: Allocator = undefined,
@@ -124,53 +124,53 @@ pub fn Musubi(
 
         /// Initiates the graph using the given allocator.
         pub fn init(self: *Self, alloc: Allocator) void {
-            self.outGoing = HashMap1.init(alloc);
-            self.inComing = if (directed) HashMap1.init(alloc) else &self.outGoing;
+            self.outgoing = HashMap1.init(alloc);
+            self.incoming = if (directed) HashMap1.init(alloc) else &self.outgoing;
             self.alloc = alloc;
         }
 
         /// Clears the graph of all data and releases the backing allocation.
         pub fn deinit(self: *Self) void {
-            std.debug.print("len outgoing before deinit: {d}\n", .{self.outGoing.count()});
-            var out = self.outGoing.iterator();
+            std.debug.print("len outgoing before deinit: {d}\n", .{self.outgoing.count()});
+            var out = self.outgoing.iterator();
             while (out.next()) |entry| {
                 entry.value_ptr.*.deinit();
             }
-            self.outGoing.deinit();
+            self.outgoing.deinit();
             if (directed) {
-                var in = self.inComing.iterator();
+                var in = self.incoming.iterator();
                 while (in.next()) |entry| {
                     entry.value_ptr.*.deinit();
                 }
-                self.inComing.deinit();
+                self.incoming.deinit();
             }
         }
 
         /// Clears the graph of all data.
         pub fn clearAndFree(self: *Self) void {
-            for (self.outGoing.values()) |*dest_vtx| {
+            for (self.outgoing.values()) |*dest_vtx| {
                 dest_vtx.deinit();
             }
-            self.outGoing.clearAndFree();
+            self.outgoing.clearAndFree();
             if (directed) {
-                for (self.inComing.values()) |*origin_vtx| {
+                for (self.incoming.values()) |*origin_vtx| {
                     origin_vtx.deinit();
                 }
-                self.inComing.clearAndFree();
+                self.incoming.clearAndFree();
             }
         }
 
         /// Clears the graph of all data but retains the backing allocation for future use.
         pub fn clearRetainingCapacity(self: *Self) void {
-            for (self.outGoing.values()) |*dest_vtx| {
+            for (self.outgoing.values()) |*dest_vtx| {
                 dest_vtx.deinit();
             }
-            self.outGoing.clearRetainingCapacity();
+            self.outgoing.clearRetainingCapacity();
             if (directed) {
-                for (self.inComing.values()) |*origin_vtx| {
+                for (self.incoming.values()) |*origin_vtx| {
                     origin_vtx.deinit();
                 }
-                self.inComing.clearRetainingCapacity();
+                self.incoming.clearRetainingCapacity();
             }
         }
 
@@ -178,8 +178,8 @@ pub fn Musubi(
         /// without triggering new allocation. Call it whenever you know beforehand
         /// the number of vertices the graph needs to hold.
         pub fn ensureTotalCapacity(self: *Self, N: usize) GraphError!void {
-            try self.outGoing.ensureTotalCapacity(@intCast(N));
-            if (directed) try self.inComing.ensureTotalCapacity(@intCast(N));
+            try self.outgoing.ensureTotalCapacity(@intCast(N));
+            if (directed) try self.incoming.ensureTotalCapacity(@intCast(N));
         }
 
         /// Clones the *other* graph of the same type into self
@@ -198,19 +198,19 @@ pub fn Musubi(
         pub fn cloneIntoSelf(self: *Self, other: *Self) !void {
             self.deinit();
 
-            self.outGoing = try other.outGoing.clone();
-            self.inComing = if (directed) try other.inComing.clone() else &self.outGoing;
+            self.outgoing = try other.outgoing.clone();
+            self.incoming = if (directed) try other.incoming.clone() else &self.outgoing;
             self.alloc = other.alloc;
 
-            var self_values = self.outGoing.values();
-            var other_values = self.outGoing.values();
+            var self_values = self.outgoing.values();
+            var other_values = self.outgoing.values();
             for (self_values, other_values) |*sv, cv| {
                 sv.* = try cv.clone();
             }
 
             if (directed) {
-                self_values = self.inComing.values();
-                other_values = self.inComing.values();
+                self_values = self.incoming.values();
+                other_values = self.incoming.values();
                 for (self_values, other_values) |*sv, cv| {
                     sv.* = try cv.clone();
                 }
@@ -233,19 +233,19 @@ pub fn Musubi(
         pub fn cloneIntoSelfWithAllocator(self: *Self, other: *Self, alloc: Allocator) !void {
             self.deinit();
 
-            self.outGoing = try other.outGoing.cloneWithAllocator(alloc);
-            self.inComing = if (directed) try other.inComing.cloneWithAllocator(alloc) else &self.outGoing;
+            self.outgoing = try other.outgoing.cloneWithAllocator(alloc);
+            self.incoming = if (directed) try other.incoming.cloneWithAllocator(alloc) else &self.outgoing;
             self.alloc = alloc;
 
-            var self_values = self.outGoing.values();
-            var other_values = self.outGoing.values();
+            var self_values = self.outgoing.values();
+            var other_values = self.outgoing.values();
             for (self_values, other_values) |*sv, cv| {
                 sv.* = try cv.clone();
             }
 
             if (directed) {
-                self_values = self.inComing.values();
-                other_values = self.inComing.values();
+                self_values = self.incoming.values();
+                other_values = self.incoming.values();
                 for (self_values, other_values) |*sv, cv| {
                     sv.* = try cv.clone();
                 }
@@ -258,7 +258,7 @@ pub fn Musubi(
         ///
         /// This process is iterative, bounding to the size of the *other*.
         pub fn mergeIntoSelf(self: *Self, other: *Self) !void {
-            var other_entries = other.outGoing.iterator();
+            var other_entries = other.outgoing.iterator();
 
             for (other.vertices()) |vtx| {
                 try self.insertVertexIfVertex(vtx);
@@ -292,11 +292,11 @@ pub fn Musubi(
             const vtx = Vertex.init(id);
 
             const m1 = HashMap2.init(self.alloc);
-            try self.outGoing.put(vtx, m1);
+            try self.outgoing.put(vtx, m1);
 
             if (directed) {
                 const m2 = HashMap2.init(self.alloc);
-                try self.inComing.put(vtx, m2);
+                try self.incoming.put(vtx, m2);
             }
             return vtx;
         }
@@ -305,8 +305,8 @@ pub fn Musubi(
         /// Clobbers any exciting if the graph contains such.
         /// It is for vertices created outside the graph with `makeVertex()`.
         pub fn insertVertexIfVertex(self: *Self, vtx: Vertex) GraphError!void {
-            try self.outGoing.put(vtx, HashMap2.init(self.alloc));
-            if (directed) try self.inComing.put(vtx, HashMap2.init(self.alloc));
+            try self.outgoing.put(vtx, HashMap2.init(self.alloc));
+            if (directed) try self.incoming.put(vtx, HashMap2.init(self.alloc));
         }
 
         /// Makes a new Edge instance outside the graph.
@@ -334,11 +334,11 @@ pub fn Musubi(
 
             const edge = Edge.init(origin, dest, edge_id, weight);
 
-            if (self.outGoing.getPtr(origin)) |origin_| {
+            if (self.outgoing.getPtr(origin)) |origin_| {
                 try origin_.put(dest, edge);
             } else return GraphError.MissingVertex;
 
-            if (self.inComing.getPtr(dest)) |dest_| {
+            if (self.incoming.getPtr(dest)) |dest_| {
                 try dest_.put(origin, edge);
             } else return GraphError.MissingVertex;
 
@@ -350,8 +350,8 @@ pub fn Musubi(
         /// It is for edges created outside with `makeEdge()`. This method does not check
         /// attempts to insert an edge with missing vertices.
         pub fn insertEdgeIfEdge(self: *Self, edge: Edge) GraphError!void {
-            try self.outGoing.getPtr(edge.origin).?.put(edge.destination, edge);
-            try self.inComing.getPtr(edge.destination).?.put(edge.origin, edge);
+            try self.outgoing.getPtr(edge.origin).?.put(edge.destination, edge);
+            try self.incoming.getPtr(edge.destination).?.put(edge.origin, edge);
         }
 
         /// Removes the given edge from the graph.
@@ -362,10 +362,10 @@ pub fn Musubi(
             var origin_result: bool = false;
             var dest_result: bool = false;
 
-            if (self.outGoing.getPtr(edge.origin)) |origin_vtx|
+            if (self.outgoing.getPtr(edge.origin)) |origin_vtx|
                 origin_result = origin_vtx.swapRemove(edge.destination);
 
-            if (self.inComing.getPtr(edge.destination)) |dest_vtx|
+            if (self.incoming.getPtr(edge.destination)) |dest_vtx|
                 dest_result = dest_vtx.swapRemove(edge.origin);
 
             return if (origin_result and dest_result) true else false;
@@ -375,20 +375,20 @@ pub fn Musubi(
         /// Returns *true* upon success, and *false* otherwise.
         /// False might indicate that the vertex is missing or was not initialized.
         pub fn removeVertex(self: *Self, vtx: Vertex) bool {
-            if (self.outGoing.getPtr(vtx)) |adjacent| {
+            if (self.outgoing.getPtr(vtx)) |adjacent| {
                 for (adjacent.keys()) |vtx_| {
-                    assert(self.inComing.getPtr(vtx_).?.swapRemove(vtx));
+                    assert(self.incoming.getPtr(vtx_).?.swapRemove(vtx));
                 }
                 adjacent.deinit();
-                assert(self.outGoing.swapRemove(vtx));
+                assert(self.outgoing.swapRemove(vtx));
 
                 if (directed) {
-                    if (self.inComing.getPtr(vtx)) |adjacent_| {
+                    if (self.incoming.getPtr(vtx)) |adjacent_| {
                         for (adjacent_.keys()) |vtx_| {
-                            assert(self.outGoing.getPtr(vtx_).?.swapRemove(vtx));
+                            assert(self.outgoing.getPtr(vtx_).?.swapRemove(vtx));
                         }
                         adjacent_.deinit();
-                        assert(self.inComing.swapRemove(vtx));
+                        assert(self.incoming.swapRemove(vtx));
                     }
                 }
                 return true;
@@ -399,23 +399,23 @@ pub fn Musubi(
         /// Returns *true* if the graph contains the given vertex,
         /// otherwise returns *false*.
         pub fn gotVertex(self: *Self, vtx: Vertex) bool {
-            return self.outGoing.contains(vtx);
+            return self.outgoing.contains(vtx);
         }
 
         /// Returns the total number of all vertices in the graph.
         pub fn vertexCount(self: *Self) usize {
-            return self.outGoing.count();
+            return self.outgoing.count();
         }
 
         /// Returns an array, with pointer and len, of all vertices present in the graph.
         pub fn vertices(self: *Self) []Vertex {
-            return self.outGoing.keys();
+            return self.outgoing.keys();
         }
 
         /// Returns *true* if the graph has an edge in between vertices *origin* and *destination*.
         /// To check whether the graph contains a concrete edge, use `gotEdgeIfEdge()`.
         pub fn gotEdge(self: *Self, origin: Vertex, dest: Vertex) bool {
-            if (self.outGoing.get(origin)) |out| {
+            if (self.outgoing.get(origin)) |out| {
                 return out.contains(dest);
             } else return false;
         }
@@ -427,7 +427,7 @@ pub fn Musubi(
 
         /// Returns the edge in between *origin* and *destination*, or *null* if no such edge.
         pub fn getEdge(self: *Self, origin: Vertex, dest: Vertex) ?Edge {
-            if (self.outGoing.get(origin)) |out| {
+            if (self.outgoing.get(origin)) |out| {
                 if (out.get(dest)) |edge| {
                     return edge;
                 } else return null;
@@ -436,7 +436,7 @@ pub fn Musubi(
 
         /// Return the total number of edges in the graph.
         pub fn edgeCount(self: *Self) usize {
-            var out_entries = self.outGoing.iterator();
+            var out_entries = self.outgoing.iterator();
             var numberOfEdges: usize = 0;
             while (out_entries.next()) |entry| {
                 numberOfEdges += entry.value_ptr.*.count();
@@ -453,11 +453,11 @@ pub fn Musubi(
         /// Returns *null* if and only if the given vertex is missing, but not an error.
         pub fn degree(self: *Self, vtx: Vertex, edge_class: EdgeClass) ?usize {
             if (edge_class == .incoming) {
-                if (self.inComing.getPtr(vtx)) |in| {
+                if (self.incoming.getPtr(vtx)) |in| {
                     return in.count();
                 } else return null;
             }
-            if (self.outGoing.getPtr(vtx)) |out| {
+            if (self.outgoing.getPtr(vtx)) |out| {
                 return out.count();
             } else return null;
         }
@@ -469,11 +469,11 @@ pub fn Musubi(
         /// Returns *null* if and only if the given vertex is missing, but not an error.
         pub fn incidentEdges(self: *Self, vtx: Vertex, edge_class: EdgeClass) ?[]Edge {
             if (edge_class == .incoming) {
-                if (self.inComing.getPtr(vtx)) |incident| {
+                if (self.incoming.getPtr(vtx)) |incident| {
                     return incident.values();
                 } else return null;
             }
-            if (self.outGoing.getPtr(vtx)) |incident| {
+            if (self.outgoing.getPtr(vtx)) |incident| {
                 return incident.values();
             } else return null;
         }
@@ -484,11 +484,11 @@ pub fn Musubi(
         /// Returns *null* if and only if the given vertex is missing, but not an error.
         pub fn adjacentVertices(self: *Self, vtx: Vertex, edge_class: EdgeClass) ?[]Vertex {
             if (edge_class == .incoming) {
-                if (self.inComing.getPtr(vtx)) |adjacent| {
+                if (self.incoming.getPtr(vtx)) |adjacent| {
                     return adjacent.keys();
                 } else return null;
             }
-            if (self.outGoing.getPtr(vtx)) |adjacent| {
+            if (self.outgoing.getPtr(vtx)) |adjacent| {
                 return adjacent.keys();
             } else return null;
         }
@@ -504,7 +504,7 @@ pub fn Musubi(
         /// Requires a `deinit()` call.
         pub fn edgesIntoSet(self: *Self) GraphError!AllEdges {
             var edges = SetE.init(self.alloc);
-            var out_entries = self.outGoing.iterator();
+            var out_entries = self.outgoing.iterator();
 
             while (out_entries.next()) |entry1| {
                 var dest_entries = entry1.value_ptr.iterator();
@@ -552,7 +552,7 @@ pub fn Musubi(
         /// Requires a `deinit()` call.
         pub fn verticesIntoSet(self: *Self) GraphError!AllVertices {
             var vertices_ = SetV.init(self.alloc);
-            const all_vtx = self.outGoing.keys();
+            const all_vtx = self.outgoing.keys();
             for (all_vtx) |vtx| {
                 try vertices_.put(vtx, {});
             }
@@ -919,7 +919,7 @@ pub fn Musubi(
                 /// Moves forward the path till null.
                 pub fn next(self: *PopPath) ?Vertex {
                     if (eql(self.cnt.last_lookup, self.dest)) self.cnt.last_lookup = undefined;
-                    const vtx = self.cnt.path.popOrNull();
+                    const vtx = self.cnt.path.pop();
                     while (vtx) |exist| return exist;
                     return null;
                 }
@@ -971,7 +971,7 @@ pub fn Musubi(
                         },
                     }
                 }
-                _ = self.path.popOrNull();
+                _ = self.path.pop();
             }
         };
 
@@ -1149,7 +1149,7 @@ pub fn Musubi(
             reflect: bool,
             minHeap: *mH,
         ) GraphError!void {
-            var items = self.outGoing.get(fringe.*).?.iterator();
+            var items = self.outgoing.get(fringe.*).?.iterator();
             while (items.next()) |Item| {
                 const v = Item.key_ptr.*;
                 if (knockout != null and !reflect and knockout.?.contains(v)) continue;
@@ -1185,7 +1185,7 @@ pub fn Musubi(
             var minHeap = mH.init();
             defer minHeap.deinit(self.alloc);
 
-            for (self.outGoing.keys()) |vtx| {
+            for (self.outgoing.keys()) |vtx| {
                 if (knockout != null and !reflect and knockout.?.contains(vtx)) continue;
                 if (knockout != null and reflect and !knockout.?.contains(vtx)) continue;
 
@@ -1767,7 +1767,7 @@ pub fn Musubi(
             var minHeap = mH.init();
             defer minHeap.deinit(self.alloc);
 
-            var all_vertices = self.outGoing.keys();
+            var all_vertices = self.outgoing.keys();
             try discovered.put(all_vertices[0], .{ .weight = 0, .edge = null });
 
             for (all_vertices[1..]) |vtx| {
@@ -1794,7 +1794,7 @@ pub fn Musubi(
                     }
                 }
 
-                var destinations = self.outGoing.get(fringe).?.iterator();
+                var destinations = self.outgoing.get(fringe).?.iterator();
                 while (destinations.next()) |Item| {
                     const v = Item.key_ptr.*;
 
