@@ -315,7 +315,7 @@ pub fn Musubi(
         /// than the `weight` parameter must be set to void, `{}`.
         /// This method does not check attempts to make the edge
         /// with missing or previously deleted vertices.
-        pub fn makeEdge(self: *Self, origin: Vertex, dest: Vertex, edge_id: edgeId, weight: edgeWt) Edge {
+        pub fn makeEdge(self: *Self, origin: Vertex, dest: Vertex, edge_id: edgeId, weight: edgeWt) !Edge {
             if (edgeWt != void and weight < 0)
                 return GraphError.NegativeWeight;
 
