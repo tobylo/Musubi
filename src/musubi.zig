@@ -315,7 +315,7 @@ pub fn Musubi(
         /// than the `weight` parameter must be set to void, `{}`.
         /// This method does not check attempts to make the edge
         /// with missing or previously deleted vertices.
-        pub fn makeEdge(self: *Self, origin: Vertex, dest: Vertex, edge_id: edgeId, weight: edgeWt) !Edge {
+        pub fn makeEdge(self: *Self, origin: Vertex, dest: Vertex, edge_id: edgeId, weight: edgeWt) GraphError!Edge {
             if (edgeWt != void and weight < 0)
                 return GraphError.NegativeWeight;
 
@@ -827,7 +827,7 @@ pub fn Musubi(
                 }
             }
             /// Checks wether the give destination vertex is present in the Connections tree.
-            pub fn connectedTo(self: Connections, dest: Vertex) bool {
+            pub fn connectedTo(self: *Connections, dest: Vertex) bool {
                 const map_tag = Tag(self.discovered);
                 return switch (map_tag) {
                     .bfsDfs => self.discovered.bfsDfs.contains(dest),
@@ -1950,6 +1950,27 @@ const testing = std.testing;
 const expect = testing.expect;
 const print = std.debug.print;
 var allocatorT = std.testing.allocator;
+
+test "Musubi: float weight" {
+    const VertexId = []const u8;
+    const EdgeId = []const u8;
+    const EdgeWt = f64;
+
+    const Graph = Musubi(VertexId, EdgeId, EdgeWt, .undirected, .weighted);
+    var graph: Graph = .{};
+    graph.init(allocatorT);
+    defer graph.deinit();
+
+    try expect(eql(graph.vertexCount(), 0));
+    try expect(eql(graph.edgeCount(), 0));
+
+    const A = try graph.insertVertex("A");
+    const B = try graph.insertVertex("B");
+    _ = try graph.insertEdge(A, B, "A-B", 4.0);
+
+    try expect(eql(graph.vertexCount(), 2));
+    try expect(eql(graph.edgeCount(), 1));
+}
 
 test "Musubi: basics" {
     const VertexId = []const u8;
